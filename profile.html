@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Profile — TaskFlow</title>
+<link rel="stylesheet" href="../css/styles.css">
+<link rel="stylesheet" href="../css/animations.css">
+<style>
+  .profile-grid{ display:grid; grid-template-columns:320px 1fr; gap:20px; }
+  .profile-card{ padding:28px; text-align:center; }
+  .big-avatar{ width:96px; height:96px; border-radius:50%; background:var(--accent); color:#fff; font-family:var(--font-display); font-size:32px; font-weight:700; display:flex; align-items:center; justify-content:center; margin:0 auto 16px; position:relative; }
+  .big-avatar .cam{ position:absolute; bottom:0; right:0; width:30px; height:30px; border-radius:50%; background:var(--bg-elevated); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; }
+  .big-avatar .cam svg{ width:14px; height:14px; color:var(--text-primary); }
+  .profile-stat-row{ display:flex; justify-content:space-around; margin-top:20px; padding-top:20px; border-top:1px solid var(--border); }
+  .profile-stat-row div{ text-align:center; }
+  .profile-stat-row .n{ font-family:var(--font-display); font-size:20px; font-weight:700; }
+  .profile-stat-row .l{ font-size:11px; color:var(--text-secondary); }
+  .panel{ padding:26px; }
+  .danger-zone{ border:1px solid var(--danger); background:var(--danger-100); border-radius:var(--radius-md); padding:20px; margin-top:20px; }
+  [data-theme="dark"] .danger-zone{ background:rgba(255,71,87,0.08); }
+  .danger-zone h4{ color:var(--danger); font-size:14px; margin-bottom:6px; }
+  .danger-zone p{ font-size:12.5px; color:var(--text-secondary); margin-bottom:14px; }
+</style>
+</head>
+<body>
+<div class="app-shell" id="app-shell"></div>
+<div id="stagedContent">
+  <div class="profile-grid reveal">
+    <div>
+      <div class="card profile-card">
+        <div class="big-avatar" id="bigAvatar"><div class="cam"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9a2 2 0 0 1 2-2h.5l1-1.5h11l1 1.5H19a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/><circle cx="12" cy="13" r="3.5"/></svg></div></div>
+        <div style="font-family:var(--font-display); font-weight:700; font-size:18px;" id="pName"></div>
+        <div class="text-secondary" style="font-size:13px;" id="pUsername"></div>
+        <p style="font-size:13px; margin-top:12px; color:var(--text-secondary);" id="pBio"></p>
+        <div class="profile-stat-row">
+          <div><div class="n" id="sTotal">0</div><div class="l">Total</div></div>
+          <div><div class="n" id="sDone">0</div><div class="l">Done</div></div>
+          <div><div class="n" id="sRate">0%</div><div class="l">Rate</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="card panel">
+        <h3 style="font-size:16px; margin-bottom:18px;">Personal information</h3>
+        <form id="profileForm">
+          <div class="field-row" style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
+            <div class="field"><label>Full name</label><input id="f-name" required></div>
+            <div class="field"><label>Username</label><input id="f-username" required></div>
+          </div>
+          <div class="field-row" style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
+            <div class="field"><label>Email</label><input type="email" id="f-email" required></div>
+            <div class="field"><label>Phone number</label><input id="f-phone"></div>
+          </div>
+          <div class="field"><label>Bio</label><textarea id="f-bio" rows="3"></textarea></div>
+          <div class="field-row" style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
+            <div class="field"><label>Country</label>
+              <select id="f-country"><option>India</option><option>United States</option><option>United Kingdom</option><option>Canada</option><option>Australia</option><option>Germany</option><option>Other</option></select>
+            </div>
+            <div class="field"><label>Time zone</label>
+              <select id="f-tz"><option>Asia/Kolkata</option><option>America/New_York</option><option>Europe/London</option><option>Asia/Singapore</option><option>Australia/Sydney</option></select>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary">Save changes</button>
+        </form>
+
+        <div class="danger-zone">
+          <h4>Delete account</h4>
+          <p>This permanently removes your tasks, categories and profile from this browser. This can't be undone.</p>
+          <button class="btn btn-ghost" style="border-color:var(--danger); color:var(--danger);" id="deleteAccBtn">Delete my account</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="../js/theme.js"></script>
+<script src="../js/storage.js"></script>
+<script src="../js/app.js"></script>
+<script src="../js/nav.js"></script>
+<script>
+  TaskFlowNav.mount('profile', 'Profile');
+  const store = window.TaskFlowStore, ui = window.TaskFlowApp;
+  const user = store.getUser(); const stats = store.stats();
+
+  function initials(n){ return n.split(' ').map(p=>p[0]).slice(0,2).join('').toUpperCase(); }
+  document.getElementById('bigAvatar').prepend(Object.assign(document.createElement('span'), {textContent: initials(user.name)}));
+  document.getElementById('pName').textContent = user.name;
+  document.getElementById('pUsername').textContent = '@'+user.username;
+  document.getElementById('pBio').textContent = user.bio;
+  document.getElementById('sTotal').textContent = stats.total;
+  document.getElementById('sDone').textContent = stats.completed;
+  document.getElementById('sRate').textContent = stats.completionPct + '%';
+
+  document.getElementById('f-name').value = user.name;
+  document.getElementById('f-username').value = user.username;
+  document.getElementById('f-email').value = user.email;
+  document.getElementById('f-phone').value = user.phone;
+  document.getElementById('f-bio').value = user.bio;
+  document.getElementById('f-country').value = user.country;
+  document.getElementById('f-tz').value = user.timezone;
+
+  document.getElementById('profileForm').addEventListener('submit', function(e){
+    e.preventDefault();
+    store.updateUser({
+      name: document.getElementById('f-name').value,
+      username: document.getElementById('f-username').value,
+      email: document.getElementById('f-email').value,
+      phone: document.getElementById('f-phone').value,
+      bio: document.getElementById('f-bio').value,
+      country: document.getElementById('f-country').value,
+      timezone: document.getElementById('f-tz').value
+    });
+    ui.toast('Profile updated');
+  });
+
+  document.getElementById('deleteAccBtn').addEventListener('click', function(){
+    if(confirm('This will erase all local TaskFlow data on this device. Continue?')){
+      localStorage.clear(); window.location.href = '../index.html';
+    }
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Analytics — TaskFlow</title>
+<link rel="stylesheet" href="../css/styles.css">
+<link rel="stylesheet" href="../css/animations.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  .an-grid{ display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+  .an-grid.full{ grid-template-columns:1fr; }
+  .panel{ padding:24px; }
+  .panel h3{ font-size:16px; margin-bottom:18px; }
+  .kpi-row{ display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:20px; }
+  .kpi{ padding:18px; }
+  .kpi .lbl{ font-size:12px; color:var(--text-secondary); margin-bottom:8px; }
+  .kpi .val{ font-family:var(--font-display); font-size:24px; font-weight:700; }
+</style>
+</head>
+<body>
+<div class="app-shell" id="app-shell"></div>
+<div id="stagedContent">
+  <div class="kpi-row reveal">
+    <div class="card kpi"><div class="lbl">Completion rate</div><div class="val" id="kpi1">—</div></div>
+    <div class="card kpi"><div class="lbl">Avg. tasks / day</div><div class="val" id="kpi2">—</div></div>
+    <div class="card kpi"><div class="lbl">On-time rate</div><div class="val" id="kpi3">—</div></div>
+    <div class="card kpi"><div class="lbl">Most active category</div><div class="val" id="kpi4" style="font-size:17px;">—</div></div>
+  </div>
+
+  <div class="an-grid reveal reveal-1">
+    <div class="card panel"><h3>Weekly progress</h3><canvas id="weeklyC" height="220"></canvas></div>
+    <div class="card panel"><h3>Monthly progress</h3><canvas id="monthlyC" height="220"></canvas></div>
+  </div>
+  <div class="an-grid reveal reveal-2" style="margin-top:20px;">
+    <div class="card panel"><h3>Tasks by category</h3><canvas id="catC" height="220"></canvas></div>
+    <div class="card panel"><h3>Tasks by priority</h3><canvas id="prioC" height="220"></canvas></div>
+  </div>
+  <div class="an-grid full reveal reveal-3" style="margin-top:20px;">
+    <div class="card panel"><h3>Completed vs. Pending trend</h3><canvas id="trendC" height="110"></canvas></div>
+  </div>
+</div>
+
+<script src="../js/theme.js"></script>
+<script src="../js/storage.js"></script>
+<script src="../js/app.js"></script>
+<script src="../js/nav.js"></script>
+<script>
+  TaskFlowNav.mount('analytics', 'Analytics');
+  const store = window.TaskFlowStore, ui = window.TaskFlowApp;
+  const tasks = store.getTasks(), cats = store.getCategories(), stats = store.stats();
+  const cs = getComputedStyle(document.documentElement);
+  const gridColor = cs.getPropertyValue('--border').trim();
+  const textColor = cs.getPropertyValue('--text-secondary').trim();
+  const accent = cs.getPropertyValue('--accent').trim();
+  Chart.defaults.color = textColor; Chart.defaults.font.family = "Inter";
+
+  document.getElementById('kpi1').textContent = stats.completionPct + '%';
+  document.getElementById('kpi2').textContent = (tasks.length/7).toFixed(1);
+  const onTime = tasks.filter(t=>t.status==='completed').length - Math.max(0, stats.overdue-1);
+  document.getElementById('kpi3').textContent = Math.max(0, Math.round((onTime/Math.max(1,stats.completed))*100)) + '%';
+  const catCounts = cats.map(c=>({name:c.name, n: tasks.filter(t=>t.category===c.id).length})).sort((a,b)=>b.n-a.n);
+  document.getElementById('kpi4').textContent = catCounts[0]?.name || '—';
+
+  new Chart(document.getElementById('weeklyC'), { type:'line', data:{ labels:['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
+    datasets:[{ label:'Completed', data:[2,4,3,5,4,6,stats.completed], borderColor:accent, backgroundColor:accent+'33', fill:true, tension:.4, pointRadius:3 }] },
+    options:{ plugins:{legend:{display:false}}, scales:{ y:{ grid:{color:gridColor} }, x:{ grid:{display:false} } } } });
+
+  new Chart(document.getElementById('monthlyC'), { type:'bar', data:{ labels:['W1','W2','W3','W4'],
+    datasets:[{ label:'Completed', data:[14,18,11,stats.completed+5], backgroundColor:accent, borderRadius:6, maxBarThickness:36 }] },
+    options:{ plugins:{legend:{display:false}}, scales:{ y:{ grid:{color:gridColor} }, x:{ grid:{display:false} } } } });
+
+  new Chart(document.getElementById('catC'), { type:'doughnut', data:{ labels:catCounts.map(c=>c.name), datasets:[{ data:catCounts.map(c=>c.n), backgroundColor:cats.map(c=>c.color), borderWidth:0 }] },
+    options:{ plugins:{legend:{position:'right', labels:{boxWidth:10, font:{size:11}}}}, cutout:'65%' } });
+
+  const prioCounts = ['High','Medium','Low'].map(p=> tasks.filter(t=>t.priority===p).length);
+  new Chart(document.getElementById('prioC'), { type:'polarArea', data:{ labels:['High','Medium','Low'], datasets:[{ data:prioCounts, backgroundColor:['#FF475799','#FFB02099','#29C46F99'] }] },
+    options:{ scales:{ r:{ grid:{color:gridColor}, ticks:{display:false} } } } });
+
+  new Chart(document.getElementById('trendC'), { type:'line', data:{ labels:['W1','W2','W3','W4','W5','W6'],
+    datasets:[
+      { label:'Completed', data:[8,12,10,15,13,stats.completed+6], borderColor:accent, backgroundColor:'transparent', tension:.4 },
+      { label:'Pending', data:[5,4,7,3,6,stats.pending], borderColor:'#FF4757', backgroundColor:'transparent', tension:.4, borderDash:[5,4] }
+    ] },
+    options:{ scales:{ y:{ grid:{color:gridColor} }, x:{ grid:{display:false} } } } });
+</script>
+</body>
+</html>

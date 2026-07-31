@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Notifications — TaskFlow</title>
+<link rel="stylesheet" href="../css/styles.css">
+<link rel="stylesheet" href="../css/animations.css">
+<style>
+  .notif-group{ margin-bottom:26px; }
+  .notif-group .g-label{ font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--text-secondary); margin-bottom:12px; }
+  .notif-item{ display:flex; gap:14px; padding:14px; border:1px solid var(--border); border-radius:var(--radius-sm); margin-bottom:8px; background:var(--bg-elevated); align-items:flex-start; }
+  .notif-item .n-ic{ width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .notif-item .n-ic svg{ width:17px; height:17px; }
+  .notif-item .n-title{ font-size:13.5px; font-weight:600; }
+  .notif-item .n-sub{ font-size:12px; color:var(--text-secondary); margin-top:2px; }
+  .notif-item .n-time{ font-size:11px; color:var(--text-tertiary); margin-left:auto; font-family:var(--font-mono); flex-shrink:0; }
+</style>
+</head>
+<body>
+<div class="app-shell" id="app-shell"></div>
+<div id="stagedContent">
+  <div id="notifList" class="reveal"></div>
+</div>
+<script src="../js/theme.js"></script>
+<script src="../js/storage.js"></script>
+<script src="../js/app.js"></script>
+<script src="../js/nav.js"></script>
+<script>
+  TaskFlowNav.mount('notifications', 'Notifications');
+  const store = window.TaskFlowStore, ui = window.TaskFlowApp;
+  const tasks = store.getTasks();
+  const overdue = tasks.filter(t=>ui.isOverdue(t));
+  const now = new Date(); const sod = new Date(now.getFullYear(),now.getMonth(),now.getDate()); const eod = new Date(sod.getTime()+86400000); const eod2 = new Date(sod.getTime()+2*86400000);
+  const dueToday = tasks.filter(t=> t.status!=='completed' && new Date(t.dueDate)>=sod && new Date(t.dueDate)<eod);
+  const dueTomorrow = tasks.filter(t=> t.status!=='completed' && new Date(t.dueDate)>=eod && new Date(t.dueDate)<eod2);
+
+  function group(label, items, color, icon){
+    if(!items.length) return '';
+    return `<div class="notif-group"><div class="g-label">${label}</div>${items.map(t=>`
+      <div class="notif-item">
+        <div class="n-ic" style="background:${color}22; color:${color};">${icon}</div>
+        <div><div class="n-title">${ui.escapeHtml(t.title)}</div><div class="n-sub">${ui.categoryMeta(t.category).name} · ${t.priority} priority</div></div>
+        <div class="n-time">${ui.fmtDate(t.dueDate)}</div>
+      </div>`).join('')}</div>`;
+  }
+  const bell = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>';
+  const warn = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4M12 17h.01"/></svg>';
+
+  const html = group('Overdue', overdue, '#FF4757', warn) + group('Due today', dueToday, '#5B5FEF', bell) + group('Due tomorrow', dueTomorrow, '#FFB020', bell);
+  document.getElementById('notifList').innerHTML = html || `<div class="empty-state">${bell}<h3>You're all caught up</h3><p>No pending notifications right now.</p></div>`;
+</script>
+</body>
+</html>

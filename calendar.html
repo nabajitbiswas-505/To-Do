@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calendar — TaskFlow</title>
+<link rel="stylesheet" href="../css/styles.css">
+<link rel="stylesheet" href="../css/animations.css">
+<style>
+  .cal-toolbar{ display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; }
+  .cal-nav{ display:flex; align-items:center; gap:10px; }
+  .cal-nav h2{ font-size:19px; min-width:180px; text-align:center; }
+  .cal-nav button{ width:34px; height:34px; border-radius:8px; border:1px solid var(--border); display:flex; align-items:center; justify-content:center; }
+  .cal-nav button:hover{ border-color:var(--accent); color:var(--accent); }
+  .view-switch{ display:flex; background:var(--bg-sunken); border-radius:99px; padding:4px; gap:2px; }
+  .view-switch button{ padding:7px 16px; border-radius:99px; font-size:12.5px; font-weight:600; color:var(--text-secondary); }
+  .view-switch button.active{ background:var(--bg-elevated); color:var(--text-primary); box-shadow:var(--shadow-sm); }
+
+  .month-grid{ display:grid; grid-template-columns:repeat(7,1fr); gap:8px; }
+  .dow{ text-align:center; font-size:11.5px; font-weight:700; color:var(--text-secondary); text-transform:uppercase; letter-spacing:.05em; padding-bottom:8px; }
+  .day-cell{
+    min-height:104px; border:1px solid var(--border); border-radius:var(--radius-sm); padding:8px; background:var(--bg-elevated);
+    transition:border-color .2s; display:flex; flex-direction:column; gap:4px; animation:scaleIn .3s var(--ease) both;
+  }
+  .day-cell.other-month{ opacity:.35; }
+  .day-cell.today{ border-color:var(--accent); box-shadow:0 0 0 1px var(--accent); }
+  .day-cell .dnum{ font-size:12.5px; font-weight:700; font-family:var(--font-mono); }
+  .day-cell.today .dnum{ color:var(--accent); }
+  .day-evt{ font-size:10.5px; font-weight:600; padding:2px 6px; border-radius:5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .day-evt.more{ color:var(--text-secondary); font-weight:500; }
+
+  .agenda-list{ display:flex; flex-direction:column; gap:18px; }
+  .agenda-group .g-date{ font-size:12.5px; font-weight:700; color:var(--text-secondary); text-transform:uppercase; letter-spacing:.05em; margin-bottom:10px; }
+  .agenda-item{ display:flex; align-items:center; gap:12px; padding:12px 14px; border:1px solid var(--border); border-radius:var(--radius-sm); margin-bottom:8px; background:var(--bg-elevated); }
+  .agenda-item .time{ font-family:var(--font-mono); font-size:12px; color:var(--text-secondary); width:70px; flex-shrink:0; }
+  .agenda-item .dot{ width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+
+  .week-grid{ display:grid; grid-template-columns:60px repeat(7,1fr); gap:0; border:1px solid var(--border); border-radius:var(--radius-sm); overflow:hidden; }
+  .week-grid .whead{ padding:10px 6px; text-align:center; font-size:11.5px; font-weight:700; border-bottom:1px solid var(--border); border-left:1px solid var(--border); background:var(--bg-sunken); }
+  .week-grid .wtime{ font-size:10.5px; color:var(--text-secondary); font-family:var(--font-mono); padding:6px; text-align:right; border-top:1px solid var(--border); }
+  .week-grid .wcell{ min-height:52px; border-top:1px solid var(--border); border-left:1px solid var(--border); padding:3px; }
+  .week-grid .wcell .day-evt{ margin-bottom:2px; }
+</style>
+</head>
+<body>
+<div class="app-shell" id="app-shell"></div>
+<div id="stagedContent">
+  <div class="cal-toolbar reveal">
+    <div class="cal-nav">
+      <button id="prevBtn">‹</button>
+      <h2 id="calLabel"></h2>
+      <button id="nextBtn">›</button>
+      <button class="btn btn-ghost btn-sm" id="todayBtn" style="width:auto; padding:7px 14px;">Today</button>
+    </div>
+    <div class="view-switch">
+      <button data-view="month" class="active">Month</button>
+      <button data-view="week">Week</button>
+      <button data-view="agenda">Agenda</button>
+    </div>
+  </div>
+  <div class="card" style="padding:20px;" id="calBody"></div>
+</div>
+
+<script src="../js/theme.js"></script>
+<script src="../js/storage.js"></script>
+<script src="../js/app.js"></script>
+<script src="../js/nav.js"></script>
+<script>
+  TaskFlowNav.mount('calendar', 'Calendar');
+  const store = window.TaskFlowStore, ui = window.TaskFlowApp;
+  let view = 'month', cursor = new Date();
+  const DOW = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+  function tasksOn(date){
+    return store.getTasks().filter(t=> new Date(t.dueDate).toDateString() === date.toDateString());
+  }
+
+  function renderMonth(){
+    const y = cursor.getFullYear(), m = cursor.getMonth();
+    document.getElementById('calLabel').textContent = `${MONTHS[m]} ${y}`;
+    const first = new Date(y,m,1); const startOffset = first.getDay();
+    const daysInMonth = new Date(y,m+1,0).getDate();
+    const daysInPrev = new Date(y,m,0).getDate();
+    let cells = [];
+    for(let i=startOffset-1;i>=0;i--) cells.push({d:daysInPrev-i, other:true, date:new Date(y,m-1,daysInPrev-i)});
+    for(let d=1; d<=daysInMonth; d++) cells.push({d, other:false, date:new Date(y,m,d)});
+    while(cells.length % 7 !== 0 || cells.length < 42) cells.push({d:cells.length, other:true, date:new Date(y,m+1, cells.length - startOffset - daysInMonth + 1)});
+    const today = new Date();
+    let html = DOW.map(d=>`<div class="dow">${d}</div>`).join('');
+    html += cells.map(c=>{
+      const evts = tasksOn(c.date);
+      const isToday = c.date.toDateString()===today.toDateString();
+      const shown = evts.slice(0,3);
+      return `<div class="day-cell ${c.other?'other-month':''} ${isToday?'today':''}">
+        <div class="dnum">${c.d}</div>
+        ${shown.map(t=>{ const pm=ui.PRIORITY_META[t.priority]; return `<div class="day-evt" style="background:${pm.dot}22; color:${pm.dot};">${ui.escapeHtml(t.title)}</div>`; }).join('')}
+        ${evts.length>3 ? `<div class="day-evt more">+${evts.length-3} more</div>` : ''}
+      </div>`;
+    }).join('');
+    document.getElementById('calBody').innerHTML = `<div class="month-grid">${html}</div>`;
+  }
+
+  function renderWeek(){
+    const d = new Date(cursor); const day = d.getDay(); const start = new Date(d); start.setDate(d.getDate()-day);
+    document.getElementById('calLabel').textContent = `${MONTHS[start.getMonth()].slice(0,3)} ${start.getDate()} – ${new Date(start.getTime()+6*86400000).getDate()}`;
+    const hours = [8,9,10,11,12,13,14,15,16,17,18,19,20];
+    let head = '<div></div>' + Array.from({length:7}, (_,i)=>{ const dd=new Date(start); dd.setDate(start.getDate()+i); return `<div class="whead">${DOW[i]}<br><span class="mono">${dd.getDate()}</span></div>`; }).join('');
+    let rows = hours.map(h=>{
+      let row = `<div class="wtime">${h}:00</div>`;
+      for(let i=0;i<7;i++){
+        const dd = new Date(start); dd.setDate(start.getDate()+i);
+        const evts = tasksOn(dd).filter(t=> new Date(t.dueDate).getHours()===h);
+        row += `<div class="wcell">${evts.map(t=>{ const pm=ui.PRIORITY_META[t.priority]; return `<div class="day-evt" style="background:${pm.dot}22;color:${pm.dot};">${ui.escapeHtml(t.title)}</div>`; }).join('')}</div>`;
+      }
+      return row;
+    }).join('');
+    document.getElementById('calBody').innerHTML = `<div class="week-grid">${head}${rows}</div>`;
+  }
+
+  function renderAgenda(){
+    document.getElementById('calLabel').textContent = 'Upcoming agenda';
+    const tasks = store.getTasks().filter(t=>t.status!=='completed');
+    const groups = {};
+    tasks.forEach(t=>{ const key = new Date(t.dueDate).toDateString(); (groups[key]=groups[key]||[]).push(t); });
+    const keys = Object.keys(groups).sort((a,b)=> new Date(a)-new Date(b));
+    document.getElementById('calBody').innerHTML = `<div class="agenda-list">` + keys.map(k=>{
+      const dateObj = new Date(k);
+      return `<div class="agenda-group"><div class="g-date">${dateObj.toLocaleDateString([], {weekday:'long', month:'long', day:'numeric'})}</div>
+        ${groups[k].map(t=>{ const pm=ui.PRIORITY_META[t.priority]; const cat=ui.categoryMeta(t.category);
+          return `<div class="agenda-item"><span class="dot" style="background:${pm.dot}"></span><span class="time">${new Date(t.dueDate).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</span><span style="flex:1; font-size:13.5px; font-weight:500;">${ui.escapeHtml(t.title)}</span><span class="badge badge-accent">${cat.name}</span></div>`;
+        }).join('')}
+      </div>`;
+    }).join('') + `</div>`;
+    if(!keys.length) document.getElementById('calBody').innerHTML = `<div class="empty-state"><h3>Nothing upcoming</h3><p>You're all caught up.</p></div>`;
+  }
+
+  function render(){ view==='month' ? renderMonth() : view==='week' ? renderWeek() : renderAgenda(); }
+
+  document.querySelectorAll('.view-switch button').forEach(b=> b.addEventListener('click', ()=>{
+    document.querySelectorAll('.view-switch button').forEach(x=>x.classList.remove('active')); b.classList.add('active');
+    view = b.dataset.view; render();
+  }));
+  document.getElementById('prevBtn').addEventListener('click', ()=>{
+    if(view==='month') cursor.setMonth(cursor.getMonth()-1); else cursor.setDate(cursor.getDate()-7); render();
+  });
+  document.getElementById('nextBtn').addEventListener('click', ()=>{
+    if(view==='month') cursor.setMonth(cursor.getMonth()+1); else cursor.setDate(cursor.getDate()+7); render();
+  });
+  document.getElementById('todayBtn').addEventListener('click', ()=>{ cursor = new Date(); render(); });
+
+  render();
+</script>
+</body>
+</html>

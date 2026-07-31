@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Help & Support — TaskFlow</title>
+<link rel="stylesheet" href="../css/styles.css">
+<link rel="stylesheet" href="../css/animations.css">
+<style>
+  .faq-item{ border:1px solid var(--border); border-radius:var(--radius-sm); margin-bottom:10px; overflow:hidden; background:var(--bg-elevated); }
+  .faq-q{ padding:16px 18px; display:flex; align-items:center; justify-content:space-between; font-size:14px; font-weight:600; }
+  .faq-q svg{ width:16px; height:16px; transition:transform .25s var(--ease); }
+  .faq-item.open .faq-q svg{ transform:rotate(45deg); }
+  .faq-a{ max-height:0; overflow:hidden; transition:max-height .3s var(--ease); }
+  .faq-item.open .faq-a{ max-height:200px; }
+  .faq-a p{ padding:0 18px 16px; font-size:13.5px; color:var(--text-secondary); line-height:1.6; }
+  .contact-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-top:24px; }
+  .contact-card{ padding:22px; text-align:center; }
+  .contact-card .ic{ width:40px; height:40px; border-radius:10px; background:var(--accent-100); display:flex; align-items:center; justify-content:center; margin:0 auto 12px; }
+  [data-theme="dark"] .contact-card .ic{ background:rgba(91,95,239,0.15); }
+</style>
+</head>
+<body>
+<div class="app-shell" id="app-shell"></div>
+<div id="stagedContent">
+  <div class="reveal" style="max-width:720px;">
+    <h3 style="font-size:16px; margin-bottom:16px;">Frequently asked questions</h3>
+    <div id="faqList"></div>
+  </div>
+  <div class="contact-grid reveal reveal-1">
+    <div class="card contact-card"><div class="ic"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--accent)" stroke-width="1.8"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 6 10-6"/></svg></div><b style="font-size:13.5px;">Email us</b><p class="text-secondary" style="font-size:12.5px; margin-top:4px;">support@taskflow.app</p></div>
+    <div class="card contact-card"><div class="ic"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--accent)" stroke-width="1.8"><path d="M21 11.5a8.4 8.4 0 0 1-9.5 8.3A8.5 8.5 0 1 1 21 11.5Z"/></svg></div><b style="font-size:13.5px;">Live chat</b><p class="text-secondary" style="font-size:12.5px; margin-top:4px;">Mon–Fri, 9am–6pm IST</p></div>
+    <div class="card contact-card"><div class="ic"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--accent)" stroke-width="1.8"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 9h18"/></svg></div><b style="font-size:13.5px;">Docs</b><p class="text-secondary" style="font-size:12.5px; margin-top:4px;">Guides & tutorials</p></div>
+  </div>
+</div>
+<script src="/js/theme.js"></script>
+<script src="../js/storage.js"></script>
+<script src="../js/nav.js"></script>
+<script>
+  TaskFlowNav.mount('help', 'Help & Support');
+  const faqs = [
+    ['How do I create a task?', 'Click "New Task" from the top bar or the My Tasks page, fill in the details, and hit Save Task.'],
+    ['Can I use TaskFlow offline?', 'Yes — this demo stores everything in your browser, so it works fully offline. Connecting a backend later is optional.'],
+    ['How do reminders work?', 'Toggle "Remind me" on any task. Enable browser or email notifications in Settings → Notifications.'],
+    ['How do I export my tasks?', 'Go to Settings → Data Export and download a CSV or JSON copy at any time.'],
+    ['Is my data private?', 'Your task data lives only in your browser\\'s local storage — it never leaves your device in this demo.']
+  ];
+  document.getElementById('faqList').innerHTML = faqs.map(([q,a])=>`
+    <div class="faq-item"><div class="faq-q">${q}<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg></div><div class="faq-a"><p>${a}</p></div></div>`).join('');
+  document.querySelectorAll('.faq-item').forEach(it=> it.querySelector('.faq-q').addEventListener('click', ()=> it.classList.toggle('open')));
+</script>
+</body>
+</html>
