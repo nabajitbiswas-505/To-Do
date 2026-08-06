@@ -2,11 +2,11 @@
 
 A clean, black‑and‑white task manager with a day/night toggle, custom accent colors, and smooth micro‑animations throughout. Built as a portfolio‑grade productivity app in the spirit of Todoist, Notion, and ClickUp.
 
-> **Status:** the frontend is fully functional as a client‑side prototype (auth, tasks, calendar, analytics, settings all work using `localStorage`). The Node/Express/MongoDB backend described below is scaffolded in the project structure but not yet implemented — see [Roadmap](#-roadmap).
+> **Status:** the frontend is fully functional as a client‑side prototype (auth, tasks, calendar, analytics, settings all work using `localStorage`). The Node/Express/MongoDB backend described below is scaffolded in the project structure but not yet implemented.
 
 ---
 
-## ✨ Highlights
+## Highlights
 
 - **True black & white base, one accent color** — light and dark themes built from the same token system, so nothing looks "re-skinned."
 - **Day/Night toggle** with no flash-of-wrong-theme on load, plus 4 selectable accent colors (amber, violet, teal, rose).
@@ -21,23 +21,21 @@ A clean, black‑and‑white task manager with a day/night toggle, custom accent
 
 ---
 
-## 🖥️ Tech Stack
+## Tech Stack
 
 | Layer | Choice |
 |---|---|
 | Frontend | HTML5, CSS3 (custom properties, no framework lock-in), vanilla JavaScript |
-| Charts | [Chart.js](https://www.chartjs.org/) |
 | Fonts | Space Grotesk (display), Inter (body), JetBrains Mono (data/labels) |
 | Data (current) | `localStorage` — simulates auth & task persistence for the prototype |
 | Backend (planned) | Node.js + Express |
-| Database (planned) | MongoDB (Mongoose) |
-| Auth (planned) | JWT + bcrypt, Google OAuth, GitHub OAuth |
+| Auth (planned) | GitHub OAuth |
 | File storage (planned) | Cloudinary (avatars & attachments) |
 | Deployment (planned) | Vercel (frontend) · Render (backend) · MongoDB Atlas (database) |
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 todo-pro/
@@ -86,7 +84,7 @@ todo-pro/
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 The current build has **zero dependencies** — it's static HTML/CSS/JS.
 
@@ -108,7 +106,7 @@ Then visit the served URL, click **Create free account**, and you're in — demo
 
 ---
 
-## 🎨 Design System
+## Design System
 
 - **Palette:** pure black/white surfaces (`--bg`, `--surface`, `--text`) with a single accent (`--accent`) that drives every highlight, badge, and progress bar. Swap it live from **Settings → Appearance**.
 - **Type:** Space Grotesk for headings, Inter for body copy, JetBrains Mono for dates, times, and data labels — gives the UI a "product" feel instead of a generic template look.
@@ -117,7 +115,7 @@ Then visit the served URL, click **Create free account**, and you're in — demo
 
 ---
 
-## 🗺️ Roadmap
+## Roadmap
 
 The spec this project is based on calls for a full-stack app. Not yet built:
 
@@ -132,7 +130,3 @@ The spec this project is based on calls for a full-stack app. Not yet built:
 - [ ] Help & Support, Privacy Policy, Terms & Conditions pages
 
 ---
-
-## 📄 License
-
-MIT — do whatever you'd like with it, attribution appreciated.
