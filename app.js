@@ -27,6 +27,8 @@
     Low:   { cls:'badge-low', dot:'#29C46F' }
   };
 
+
+  
   function categoryMeta(catId){
     const cats = window.TaskFlowStore ? window.TaskFlowStore.getCategories() : [];
     return cats.find(c=>c.id===catId) || { name:catId, color:'#6E6E7A' };
